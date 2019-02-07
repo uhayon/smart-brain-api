@@ -38,7 +38,7 @@ app.post('/signin', (req, res) => {
     return user.username === username 
       && user.password === password
   });
-  foundUser ? res.json(foundUser) : res.json('User not found');
+  foundUser ? res.json(foundUser) : res.json('User not found'); 
 })
 
 const port = process.env.PORT || 3000;
