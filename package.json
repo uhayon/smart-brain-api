@@ -1,0 +1,26 @@
+{
+  "name": "smart-brain-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uhayon/smart-brain-api.git"
+  },
+  "author": "uRitServices",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/uhayon/smart-brain-api/issues"
+  },
+  "homepage": "https://github.com/uhayon/smart-brain-api#readme",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4"
+  },
+  "devDependencies": {
+    "nodemon": "^1.18.9"
+  }
+}
