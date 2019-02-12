@@ -24,7 +24,6 @@ const database = {
       id: '123',
       fullName: 'Fernando Cavenaghi',
       username: 'fc9',
-      mail: 'fcavegol@carp.com.ar',
       entries: 0,
       joined: new Date()
     },
@@ -32,7 +31,6 @@ const database = {
       id: '124',
       fullName: 'uRi',
       username: 'uRi',
-      mail: 'theuri@lalala.com',
       entries: 0,
       joined: new Date()
     }
@@ -41,12 +39,12 @@ const database = {
     {
       id: '123',
       hash: '$2a$10$7lLx5lhjB30EQR759VbB/OtWTS2hWYtSp4mjoxfA26fWWKCwkns2a',
-      mail: 'fcavegol@carp.com.ar'
+      username: 'fc9'
     },
     {
       id: '124',
       hash: '$2a$10$7lLx5lhjB30EQR759VbB/OtWTS2hWYtSp4mjoxfA26fWWKCwkns2a',
-      mail: 'theuri@lalala.com'
+      username: 'uRi'
     }
   ]
 }
@@ -62,40 +60,41 @@ app.get('/', (req, res) => {
 app.post('/signin', (req, res) => {
   const { username, password } = req.body;
   let foundUser = database.users.find(user => user.username === username);
-  if (foundUser) {
-    const userLoginData = database.login.find(userLoginData => userLoginData.mail === foundUser.mail);
-    foundUser = bcrypt.compareSync(password, userLoginData.hash) ? foundUser : false;
+  const foundLogin = database.login.find(user => user.username === username);
+
+  if (foundUser && foundLogin) {
+    foundUser = bcrypt.compareSync(password, foundLogin.hash) ? foundUser : false;
   }
 
-  // const foundUser = database.users.find(user => {
-  //   return user.username === username 
-  //     && user.password === password
-  // });
-  foundUser ? res.json(foundUser) : res.status(400).json('User not found'); 
+  foundUser ? res.json(foundUser) : res.status(404).json('User not found'); 
 })
 
-app.post('/register', (req, res) => {
-  const { fullName, username, mail, password } = req.body;
-  bcrypt.hash(password, null, null, (err, hash) => {
-    const id = (++database.currentUserId).toString();
-    database.users.push({
-      id,
-      fullName,
-      username,
-      mail,
-      entries: 0,
-      joined: new Date(),
-      ...req.body
+app.post('/signup', (req, res) => {
+  const { fullName, username, password } = req.body;
+  const existingUser = database.users.find(user => user.username === username);
+
+  if (!existingUser) {
+    bcrypt.hash(password, null, null, (err, hash) => {
+      const id = (++database.currentUserId).toString();
+      database.users.push({
+        id,
+        fullName,
+        username,
+        entries: 0,
+        joined: new Date()
+      });
+  
+      database.login.push({
+        id,
+        hash,
+        username
+      });
+      res.json(database.users[database.users.length - 1]);
     });
+  } else {
+    res.status(400).send('The username is already taken');
+  }
 
-    database.login.push({
-      id,
-      hash,
-      mail
-    })
-  });
-
-  res.json(database.users[database.users.length - 1]);
 });
 
 app.get('/profile/:id', (req, res) => {
@@ -120,14 +119,3 @@ const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`App is running on port ${port}`)
 });
-
-/*
-
-/ --> res = this is working
-/signin --> POST = success/fail
-/signup --> POST = user
-/profile/:userId --> GET = user
-/image --> PUT = user
-
-
-*/
