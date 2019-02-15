@@ -2,6 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt-nodejs');
 const cors = require ('cors');
+const logger = require('./winston');
+const morgan = require('morgan');
 const knex = require('knex')({
   client: 'pg',
   connection: {
@@ -14,7 +16,7 @@ const knex = require('knex')({
 
 const app = express();
 app.use(bodyParser.json());
-
+app.use(morgan(':remote-addr - :remote-user [:date[iso]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" - :response-time ms'));
 app.use(cors());
 // app.use(cors({
 //   origin: (origin, callback) => {
@@ -41,10 +43,15 @@ app.post('/signin', (req, res) => {
         .where({username})
         .returning('*')
         .then(([user, _]) => {
+          logger.info(`Login successfull`);
           res.json(user);
         })
-        .catch(err => res.status(404).json('Unable to get the user'))
+        .catch(err => {
+          logger.error(`/signin - ${err}`)
+          res.status(404).json('Unable to get the user')
+        })
       } else {
+        logger.error(`/signin - Wrong credentials`);
         res.status(400).json('Wrong credentials');
       }
     } else {
@@ -73,13 +80,17 @@ app.post('/signup', (req, res) => {
         })
         .returning('*')
         .then(([user, _]) => {
+          logger.info(`/signup - User created: ${loginUsername}`)
           res.json(user)
         })
     })
     .then(trx.commit)
     .catch(trx.rollback)
   })
-  .catch(err => res.status(400).json('Unable to register'));
+  .catch(err => {
+    logger.error(`/signup - ${err}`)
+    res.status(400).json('Unable to register')
+  });
 });
 
 app.get('/profile/:id', (req, res) => {
