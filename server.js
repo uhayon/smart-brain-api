@@ -2,6 +2,15 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt-nodejs');
 const cors = require ('cors');
+const knex = require('knex')({
+  client: 'pg',
+  connection: {
+    host: '127.0.0.1',
+    user: 'uhayon',
+    password: '',
+    database: 'smart-brain'
+  }
+});
 
 const app = express();
 app.use(bodyParser.json());
@@ -16,103 +25,83 @@ app.use(cors());
 //     }
 //   }
 // }))
-
-const database = {
-  currentUserId: 124,
-  users: [
-    {
-      id: '123',
-      fullName: 'Fernando Cavenaghi',
-      username: 'fc9',
-      entries: 0,
-      joined: new Date()
-    },
-    {
-      id: '124',
-      fullName: 'uRi',
-      username: 'uRi',
-      entries: 0,
-      joined: new Date()
-    }
-  ],
-  login: [
-    {
-      id: '123',
-      hash: '$2a$10$7lLx5lhjB30EQR759VbB/OtWTS2hWYtSp4mjoxfA26fWWKCwkns2a',
-      username: 'fc9'
-    },
-    {
-      id: '124',
-      hash: '$2a$10$7lLx5lhjB30EQR759VbB/OtWTS2hWYtSp4mjoxfA26fWWKCwkns2a',
-      username: 'uRi'
-    }
-  ]
-}
-
-const findUser = userId => {
-  return database.users.find(user => user.id === userId);
-}
-
-app.get('/', (req, res) => {
-  res.json(database.users);
-});
-
 app.post('/signin', (req, res) => {
   const { username, password } = req.body;
-  let foundUser = database.users.find(user => user.username === username);
-  const foundLogin = database.login.find(user => user.username === username);
+  knex
+  .select('username', 'hash')
+  .from('login')
+  .where('username', '=', username)
+  .then(([loginUser, _]) => {
+    if (loginUser) {
+      const userValid = bcrypt.compareSync(password, loginUser.hash);
 
-  if (foundUser && foundLogin) {
-    foundUser = bcrypt.compareSync(password, foundLogin.hash) ? foundUser : false;
-  }
-
-  foundUser ? res.json(foundUser) : res.status(404).json('User not found'); 
+      if (userValid) {
+        knex('users')
+        .select('*')
+        .where({username})
+        .returning('*')
+        .then(([user, _]) => {
+          res.json(user);
+        })
+        .catch(err => res.status(404).json('Unable to get the user'))
+      } else {
+        res.status(400).json('Wrong credentials');
+      }
+    } else {
+      res.status(400).json('Wrong credentials');
+    }
+  });
 })
 
 app.post('/signup', (req, res) => {
-  const { fullName, username, password } = req.body;
-  const existingUser = database.users.find(user => user.username === username);
+  const { fullname, username, password } = req.body;
 
-  if (!existingUser) {
-    bcrypt.hash(password, null, null, (err, hash) => {
-      const id = (++database.currentUserId).toString();
-      database.users.push({
-        id,
-        fullName,
-        username,
-        entries: 0,
-        joined: new Date()
-      });
-  
-      database.login.push({
-        id,
-        hash,
-        username
-      });
-      res.json(database.users[database.users.length - 1]);
-    });
-  } else {
-    res.status(400).send('The username is already taken');
-  }
-
+  const hash = bcrypt.hashSync(password);
+  knex.transaction(trx => {
+    trx.insert({
+      hash,
+      username
+    })
+    .into('login')
+    .returning('username')
+    .then(([loginUsername, _]) => {
+      return trx('users')
+        .insert({
+          fullname: fullname,
+          username: loginUsername,
+          joined: new Date()
+        })
+        .returning('*')
+        .then(([user, _]) => {
+          res.json(user)
+        })
+    })
+    .then(trx.commit)
+    .catch(trx.rollback)
+  })
+  .catch(err => res.status(400).json('Unable to register'));
 });
 
 app.get('/profile/:id', (req, res) => {
   const { id } = req.params;
-  const user = findUser(id);
-  user ? res.json(user) : res.status(404).json('User not found');
+  knex
+  .select('*')
+  .from('users')
+  .where({id})
+  .then(([user, _]) => {
+    user ? res.json(user) : res.status(404).json('User not found');
+  })
 });
 
 app.put('/image', (req, res) => {
   const { id } = req.body;
-  const user = findUser(id);
-
-  if (user) {
-    ++user.entries;
-    res.json(user)
-  } else {
-    res.status(404).json('User not found')
-  }
+  knex('users')
+  .where({id})
+  .increment('entries', 1)
+  .returning('*')
+  .then(([user, _]) => {
+    user ? res.json(user) : res.status(404).json('User not found');
+  })
 });
 
 const port = process.env.PORT || 3000;
