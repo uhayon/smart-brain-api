@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt-nodejs');
@@ -7,12 +9,17 @@ const morgan = require('morgan');
 const knex = require('knex')({
   client: 'pg',
   connection: {
-    host: '127.0.0.1',
-    user: 'uhayon',
-    password: '',
-    database: 'smart-brain'
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.BD_NAME
   }
 });
+
+const { handleSignup } = require('./controllers/signup');
+const { handleSignin } = require('./controllers/signin');
+const { handleProfileGet } = require('./controllers/profile');
+const { handleImageRecognition, handleApiCall } = require('./controllers/image');
 
 const app = express();
 app.use(bodyParser.json());
@@ -27,93 +34,12 @@ app.use(cors());
 //     }
 //   }
 // }))
-app.post('/signin', (req, res) => {
-  const { username, password } = req.body;
-  knex
-  .select('username', 'hash')
-  .from('login')
-  .where('username', '=', username)
-  .then(([loginUser, _]) => {
-    if (loginUser) {
-      const userValid = bcrypt.compareSync(password, loginUser.hash);
 
-      if (userValid) {
-        knex('users')
-        .select('*')
-        .where({username})
-        .returning('*')
-        .then(([user, _]) => {
-          logger.info(`Login successfull`);
-          res.json(user);
-        })
-        .catch(err => {
-          logger.error(`/signin - ${err}`)
-          res.status(404).json('Unable to get the user')
-        })
-      } else {
-        logger.error(`/signin - Wrong credentials`);
-        res.status(400).json('Wrong credentials');
-      }
-    } else {
-      res.status(400).json('Wrong credentials');
-    }
-  });
-})
-
-app.post('/signup', (req, res) => {
-  const { fullname, username, password } = req.body;
-
-  const hash = bcrypt.hashSync(password);
-  knex.transaction(trx => {
-    trx.insert({
-      hash,
-      username
-    })
-    .into('login')
-    .returning('username')
-    .then(([loginUsername, _]) => {
-      return trx('users')
-        .insert({
-          fullname: fullname,
-          username: loginUsername,
-          joined: new Date()
-        })
-        .returning('*')
-        .then(([user, _]) => {
-          logger.info(`/signup - User created: ${loginUsername}`)
-          res.json(user)
-        })
-    })
-    .then(trx.commit)
-    .catch(trx.rollback)
-  })
-  .catch(err => {
-    logger.error(`/signup - ${err}`)
-    res.status(400).json('Unable to register')
-  });
-});
-
-app.get('/profile/:id', (req, res) => {
-  const { id } = req.params;
-  knex
-  .select('*')
-  .from('users')
-  .where({id})
-  .then(([user, _]) => {
-    user ? res.json(user) : res.status(404).json('User not found');
-  })
-});
-
-app.put('/image', (req, res) => {
-  const { id } = req.body;
-  knex('users')
-  .where({id})
-  .increment('entries', 1)
-  .returning('*')
-  .then(([user, _]) => {
-    user ? res.json(user) : res.status(404).json('User not found');
-  })
-});
+app.post('/signin', handleSignin(logger, knex, bcrypt));
+app.post('/signup', handleSignup(logger, knex, bcrypt));
+app.get('/profile/:id', handleProfileGet(logger, knex));
+app.put('/image', handleImageRecognition(knex, logger));
+app.post('/imageurl', handleApiCall(logger));
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
