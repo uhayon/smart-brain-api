@@ -1,5 +1,5 @@
 const { createLogger, format, transports } = require('winston');
-const { combine, printf, colorize, json } = format;
+const { combine, printf, json } = format;
 const path = require('path');
 
 const myFormat = printf(info => `${info.timestamp} [${info.level}] - ${info.message}`);

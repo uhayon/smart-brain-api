@@ -18,7 +18,7 @@ const handleApiCall = (logger) => (req, res) => {
     });
 }
 
-const handleImageRecognition = (knex, logger) => (req, res) => {
+const handleImageRecognition = (logger, knex) => (req, res) => {
   const { id } = req.body;
   knex('users')
   .where({id})
