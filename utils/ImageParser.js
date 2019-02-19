@@ -9,7 +9,7 @@ class ImageParser {
       case 'CELEBRITY_MODEL':
         return this.handleCelebrityDetection();
       case 'COLOR_MODEL':
-        break;
+        return this.handleColorDetection();
       case 'FACE_DETECT_MODEL':
         return this.handleFaceDetection();
       case 'FOOD_MODEL':
@@ -29,6 +29,19 @@ class ImageParser {
     }
 
     return foodIngredients;
+  }
+
+  handleColorDetection() {
+    const recognizedColors = [];
+    let { colors } = this.apiResponse.outputs[0].data;
+    colors.sort((elem1, elem2) => elem2.value - elem1.value)
+    
+    for (let i = 0; i < colors.length; i++) {
+      const { raw_hex, value, w3c : { name } } = colors[i];
+      recognizedColors.push(this.buildReference(`${name} ${raw_hex} (${(value * 100).toFixed(2)}%)`, `${raw_hex}`))
+    }
+
+    return recognizedColors
   }
 
   handleCelebrityDetection() {

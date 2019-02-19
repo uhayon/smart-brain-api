@@ -1,1 +1,3 @@
 2019-02-19T15:46:25.605Z [error] - /imageurl - [object Object]
+2019-02-19T21:13:01.677Z [error] - /imageurl - ReferenceError: color is not defined
+2019-02-19T21:13:10.971Z [error] - /imageurl - ReferenceError: color is not defined
