@@ -13,10 +13,22 @@ class ImageParser {
       case 'FACE_DETECT_MODEL':
         return this.handleFaceDetection();
       case 'FOOD_MODEL':
-        break;
+        return this.handleFoodDetection();
       default:
         return [];
     }
+  }
+
+  handleFoodDetection() {
+    const foodIngredients = [];
+    const { concepts: ingredients } = this.apiResponse.outputs[0].data;
+
+    for (let i = 0; i < ingredients.length; i++) {
+      const {name, value} = ingredients[i];
+      foodIngredients.push(this.buildReference(`${name} (${(value * 100).toFixed(2)}%)`, `Ingredient-${i}`))
+    }
+
+    return foodIngredients;
   }
 
   handleCelebrityDetection() {
