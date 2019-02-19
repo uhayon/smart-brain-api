@@ -5,7 +5,7 @@ const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt-nodejs');
 const cors = require ('cors');
 const helmet = require('helmet');
-const logger = require('./winston');
+const logger = require('./utils/winston');
 const morgan = require('morgan');
 const knex = require('knex')({
   client: 'pg',

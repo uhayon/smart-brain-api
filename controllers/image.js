@@ -1,5 +1,7 @@
 const Clarifai = require('clarifai');
 
+const ImageParser = require('../utils/ImageParser');
+
 Clarifai.CELEBRITY_MODEL = 'e466caa0619f444ab97497640cefc4dc';
 const app = new Clarifai.App({
   apiKey: process.env.CLARIFAI_API_KEY
@@ -10,7 +12,8 @@ const handleApiCall = (logger) => (req, res) => {
   app.models
     .predict(Clarifai[detectionType], imageUrl)
     .then(data => {
-      res.json(data);
+      const imageParser = new ImageParser(detectionType, data);
+      res.json(imageParser.parseImageData());
     })
     .catch(err => {
       logger.error(`/imageurl - ${err}`);
