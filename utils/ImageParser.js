@@ -7,7 +7,7 @@ class ImageParser {
   parseImageData() {
     switch(this.detectionType) {
       case 'CELEBRITY_MODEL':
-        break;
+        return this.handleCelebrityDetection();
       case 'COLOR_MODEL':
         break;
       case 'FACE_DETECT_MODEL':
@@ -17,6 +17,18 @@ class ImageParser {
       default:
         return [];
     }
+  }
+
+  handleCelebrityDetection() {
+    const celebrities = [];
+    const { regions: recognizedCelebrities } = this.apiResponse.outputs[0].data;
+    for (let i = 0; i < recognizedCelebrities.length; i++) {
+      const { region_info: { bounding_box }, data: faceData } = recognizedCelebrities[i];
+      const { concepts: [mostAccurate, _] } = faceData.face.identity;
+      celebrities.push(this.buildReference(`${mostAccurate.name} (${(mostAccurate.value * 100).toFixed(2)}%)`, `Reference-${i + 1}`, bounding_box))
+    };
+
+    return celebrities;
   }
 
   handleFaceDetection() {
