@@ -8,7 +8,7 @@ const app = new Clarifai.App({
 const handleApiCall = (logger) => (req, res) => {
   const { detectionType, imageUrl } = req.body;
   app.models
-    .predict(detectionType, imageUrl)
+    .predict(Clarifai[detectionType], imageUrl)
     .then(data => {
       res.json(data);
     })
