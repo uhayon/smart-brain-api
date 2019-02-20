@@ -16,7 +16,7 @@ const handleApiCall = (logger) => (req, res) => {
       res.json(imageParser.parseImageData());
     })
     .catch(err => {
-      logger.error(`/imageurl - ${err}`);
+      logger.error(`/imageurl - ${JSON.stringify(err)}`);
       res.status(400).json('Unable to work with API');
     });
 }
@@ -31,7 +31,7 @@ const handleImageRecognition = (logger, knex) => (req, res) => {
     user ? res.json(user) : res.status(404).json('User not found');
   })
   .catch(err => {
-    logger.error(`/image - ${err}`);
+    logger.error(`/image - ${JSON.stringify(err)}`);
     res.status(400).json('Unable to process image');
   })
 };

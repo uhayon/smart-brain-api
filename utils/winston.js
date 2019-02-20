@@ -19,7 +19,7 @@ const logger = createLogger({
   ),
   transports: [
     new transports.File({
-      filename: path.join(__dirname, 'logs', `${winstonLogName}.log`),
+      filename: path.join(__dirname, '../logs', `${winstonLogName}.log`),
       options: { flags: 'a' }
     })
   ]
