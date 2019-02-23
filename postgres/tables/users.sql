@@ -5,7 +5,10 @@ CREATE TABLE users (
     fullName VARCHAR(100),
     username text UNIQUE NOT NULL,
     entries BIGINT DEFAULT 0,
-    joined TIMESTAMP NOT NULL
+    joined TIMESTAMP NOT NULL,
+    age smallint DEFAULT 0,
+    rating smallint DEFAULT 0,
+    favouriteDetectionType text
 );
 
 COMMIT;

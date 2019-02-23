@@ -14,7 +14,7 @@ const knex = require('knex')({
 
 const { handleSignup } = require('./controllers/signup');
 const { handleSignin } = require('./controllers/signin');
-const { handleProfileGet } = require('./controllers/profile');
+const { handleProfileGet, handleProfileUpdate } = require('./controllers/profile');
 const { handleImageRecognition, handleApiCall } = require('./controllers/image');
 
 const app = express();
@@ -40,6 +40,7 @@ app.use(cors());
 app.post('/signin', handleSignin(logger, knex, bcrypt));
 app.post('/signup', handleSignup(logger, knex, bcrypt));
 app.get('/profile/:id', handleProfileGet(logger, knex));
+app.post('/profile/:id', handleProfileUpdate(logger, knex))
 app.put('/image', handleImageRecognition(logger, knex));
 app.post('/imageurl', handleApiCall(logger));
 
