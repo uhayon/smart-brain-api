@@ -11,11 +11,14 @@ const knex = require('knex')({
   client: 'pg',
   connection: process.env.POSTGRES_URI
 });
+const redis = require('redis');
+const redisClient = redis.createClient(process.env.REDIS_URI);
 
 const { handleSignup } = require('./controllers/signup');
-const { handleSignin } = require('./controllers/signin');
+const { handleAuthentication } = require('./controllers/signin');
 const { handleProfileGet, handleProfileUpdate } = require('./controllers/profile');
 const { handleImageRecognition, handleApiCall } = require('./controllers/image');
+const { requireAuth } = require('./middleware/authorization'); 
 
 const app = express();
 app.use(bodyParser.json());
@@ -37,12 +40,12 @@ app.use(cors());
 //     }
 //   }
 // }))
-app.post('/signin', handleSignin(logger, knex, bcrypt));
+app.post('/signin', handleAuthentication(logger, knex, bcrypt, redisClient));
 app.post('/signup', handleSignup(logger, knex, bcrypt));
-app.get('/profile/:id', handleProfileGet(logger, knex));
-app.post('/profile/:id', handleProfileUpdate(logger, knex))
-app.put('/image', handleImageRecognition(logger, knex));
-app.post('/imageurl', handleApiCall(logger));
+app.get('/profile/:id', requireAuth(redisClient), handleProfileGet(logger, knex));
+app.post('/profile/:id', requireAuth(redisClient), handleProfileUpdate(logger, knex))
+app.put('/image', requireAuth(redisClient), handleImageRecognition(logger, knex));
+app.post('/imageurl', requireAuth(redisClient), handleApiCall(logger));
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {

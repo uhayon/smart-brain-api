@@ -1,15 +1,12 @@
 const searchProfile = (id, res, logger, knex) => {
-  knex
-  .select('age', 'favouritedetectiontype', 'rating')
+  return knex
+  .select('*')
   .from('users')
   .where({id})
   .then(([profile, _]) => {
-    profile ? res.json(profile) : res.status(404).json('User not found');
+    return profile ? profile : Promise.reject('User not found');
   })
-  .catch(err => {
-    logger.error(`/profile - ${err}`);
-    res.status(400).json('Unable to get profile');
-  });
+  .catch(err => Promise.reject(err));
 }
 
 const handleProfileGet = (logger, knex) => (req, res) => {
@@ -19,7 +16,12 @@ const handleProfileGet = (logger, knex) => (req, res) => {
     return res.status(400).json('Invalid request');
   }
 
-  searchProfile(id, res, logger, knex);
+  searchProfile(id, res, logger, knex)
+    .then(profile => res.json(profile))
+    .catch(err => {
+      logger.error('/profile - GET', err);
+      res.status(400).json('Unable to get profile')
+    })
 };
 
 const handleProfileUpdate = (logger, knex) => (req, res) => {
@@ -31,7 +33,12 @@ const handleProfileUpdate = (logger, knex) => (req, res) => {
     .update({ favouritedetectiontype, age, rating })
     .then(response => {
       if (response) {
-        return searchProfile(id, res, logger, knex);
+        return searchProfile(id, res, logger, knex)
+        .then(profile => res.json(profile))
+        .catch(err => {
+          logger.error('/profile - UPDATE', err);
+          res.status(400).json('Unable to get profile')
+        })
       } else {
         res.status(400).json('Unable to update');
       }
