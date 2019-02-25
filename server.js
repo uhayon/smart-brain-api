@@ -12,7 +12,8 @@ const knex = require('knex')({
   connection: process.env.POSTGRES_URI
 });
 const redis = require('redis');
-const redisClient = redis.createClient(process.env.REDIS_URI);
+// const redisClient = redis.createClient(process.env.REDIS_URI);
+const redisClient = redis.createClient(process.env.REDIS_PORT, process.env.REDIS_URI);
 
 const { handleSignup } = require('./controllers/signup');
 const { handleAuthentication } = require('./controllers/signin');
