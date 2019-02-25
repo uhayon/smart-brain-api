@@ -30,16 +30,15 @@ app.use(helmet.contentSecurityPolicy({
   }
 }));
 app.use(morgan(':remote-addr - :remote-user [:date[iso]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" - :response-time ms'));
-app.use(cors());
-// app.use(cors({
-//   origin: (origin, callback) => {
-//     if (origin === 'http://localhost:3001') {
-//       callback(null, true);
-//     } else {
-//       callback('Not allowed by CORS')
-//     }
-//   }
-// }))
+app.use(cors({
+  origin: (origin, callback) => {
+    if (origin === process.env.FRONT_END_DOMAIN) {
+      callback(null, true);
+    } else {
+      callback('Not allowed by CORS')
+    }
+  }
+}))
 app.post('/signin', handleAuthentication(logger, knex, bcrypt, redisClient));
 app.post('/signup', handleSignup(logger, knex, bcrypt));
 app.get('/profile/:id', requireAuth(redisClient), handleProfileGet(logger, knex));
