@@ -13,7 +13,7 @@ const knex = require('knex')({
 });
 const redis = require('redis');
 // const redisClient = redis.createClient(process.env.REDIS_URI);
-const redisClient = redis.createClient(process.env.REDIS_PORT, process.env.REDIS_URI);
+const redisClient = redis.createClient(process.env.REDIS_PORT, process.env.REDIS_URI, {password: process.env.REDIS_PASSWORD});
 
 const { handleSignup } = require('./controllers/signup');
 const { handleAuthentication } = require('./controllers/signin');
