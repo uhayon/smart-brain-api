@@ -5,6 +5,10 @@ class ImageParser {
   }
 
   parseImageData() {
+    if (Object.keys(this.apiResponse.outputs[0].data).length === 0) {
+      return [];
+    }
+    
     switch(this.detectionType) {
       case 'CELEBRITY_MODEL':
         return this.handleCelebrityDetection();
