@@ -12,12 +12,10 @@ const handleApiCall = (logger) => (req, res) => {
   app.models
     .predict(Clarifai[detectionType], imageUrl)
     .then(data => {
-      console.log('entrò acà', data);
       const imageParser = new ImageParser(detectionType, data);
       res.json(imageParser.parseImageData());
     })
     .catch(err => {
-      console.log('entrò acà tambièn');
       logger.error(`/imageurl - ${JSON.stringify(err)}`);
       res.status(400).json('Unable to work with API');
     });
