@@ -34,11 +34,9 @@ app.use(morgan(':remote-addr - :remote-user [:date[iso]] ":method :url HTTP/:htt
 let redisClient;
 console.log(process.env.NODE_ENV)
 if (process.env.NODE_ENV !== 'production') {
-  console.log('dev')
   app.use(cors());
   redisClient = redis.createClient(process.env.REDIS_URI);
 } else {
-  console.log('prd')
   app.use(cors({
     origin: (origin, callback) => {
       if (origin === process.env.FRONT_END_DOMAIN) {
