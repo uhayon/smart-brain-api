@@ -12,8 +12,6 @@ const knex = require('knex')({
   connection: process.env.POSTGRES_URI
 });
 const redis = require('redis');
-// const redisClient = redis.createClient(process.env.REDIS_URI);
-const redisClient = redis.createClient(process.env.REDIS_PORT, process.env.REDIS_URI, {password: process.env.REDIS_PASSWORD});
 
 const { handleSignup } = require('./controllers/signup');
 const { handleAuthentication } = require('./controllers/signin');
@@ -31,17 +29,29 @@ app.use(helmet.contentSecurityPolicy({
   }
 }));
 app.use(morgan(':remote-addr - :remote-user [:date[iso]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" - :response-time ms'));
-app.use(cors({
-  origin: (origin, callback) => {
-    if (origin === process.env.FRONT_END_DOMAIN) {
-      callback(null, true);
-    } else {
-      callback('Not allowed by CORS')
+
+
+let redisClient;
+console.log(process.env.NODE_ENV)
+if (process.env.NODE_ENV !== 'production') {
+  console.log('dev')
+  app.use(cors());
+  redisClient = redis.createClient(process.env.REDIS_URI);
+} else {
+  console.log('prd')
+  app.use(cors({
+    origin: (origin, callback) => {
+      if (origin === process.env.FRONT_END_DOMAIN) {
+        callback(null, true);
+      } else {
+        callback('Not allowed by CORS')
+      }
     }
-  }
-}))
+  }));
+  redisClient = redis.createClient(process.env.REDIS_PORT, process.env.REDIS_URI, {password: process.env.REDIS_PASSWORD});
+}
 app.post('/signin', handleAuthentication(logger, knex, bcrypt, redisClient));
-app.post('/signup', handleSignup(logger, knex, bcrypt));
+app.post('/signup', handleSignup(logger, knex, bcrypt, redisClient));
 app.get('/profile/:id', requireAuth(redisClient), handleProfileGet(logger, knex));
 app.post('/profile/:id', requireAuth(redisClient), handleProfileUpdate(logger, knex))
 app.put('/image', requireAuth(redisClient), handleImageRecognition(logger, knex));

@@ -1,4 +1,6 @@
-const handleSignup = (logger, knex, bcrypt) => (req, res) => {
+const { createSession } = require('../middleware/authorization');
+
+const handleSignup = (logger, knex, bcrypt, redisClient) => (req, res) => {
   const { fullname, username, password } = req.body;
 
   if (!fullname || !username || ! password) {
@@ -22,7 +24,12 @@ const handleSignup = (logger, knex, bcrypt) => (req, res) => {
         })
         .returning('*')
         .then(([user, _]) => {
-          res.json(user)
+          createSession(user, logger, redisClient)
+            .then(session => res.json(session))
+            .catch(err => {
+              logger.error('/signup - Auth', err)
+              res.status(400).json('Signup failed')
+            })
         })
     })
     .then(trx.commit)
